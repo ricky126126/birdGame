@@ -13,13 +13,13 @@ x-proxy-cache: MISS
 X-GitHub-Request-Id: DC04:3BB9DA:52EC48:633B1B:6A7D4569
 x-github-edge-region: iad
 Accept-Ranges: bytes
-Age: 1
-Date: Thu, 13 Aug 2026 04:17:47 GMT
+Date: Thu, 13 Aug 2026 04:43:20 GMT
 Via: 1.1 varnish
-X-Served-By: cache-del-vibw2260025-DEL
-X-Cache: MISS
-X-Cache-Hits: 0
-X-Timer: S1786594667.671722,VS0,VE818
+Age: 0
+X-Served-By: cache-del-vibw2260031-DEL
+X-Cache: HIT
+X-Cache-Hits: 1
+X-Timer: S1786596201.710385,VS0,VE235
 Vary: Accept-Encoding
-X-Fastly-Request-ID: 7b5e9d33fb86de3b0499bcc9b22811a4fccfe966
+X-Fastly-Request-ID: 71dfcffaad10f75929cdb44f7efc65591f97c04e
 
