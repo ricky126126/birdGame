@@ -32,9 +32,11 @@ SCREEN_HEIGHT = 600
 
 FPS = 60
 
+# Bird physics
 BIRD_SPEED = 8
 GRAVITY = 0.5
 
+# Pipe / ground speed
 GAME_SPEED = 4
 
 GROUND_WIDTH = SCREEN_WIDTH * 2
@@ -47,7 +49,7 @@ PIPE_GAP = 150
 
 
 # =========================================================
-# INITIALIZE PYGAME
+# PYGAME INITIALIZATION
 # =========================================================
 
 pygame.init()
@@ -62,7 +64,50 @@ clock = pygame.time.Clock()
 
 
 # =========================================================
-# LOAD IMAGES
+# AUDIO
+# =========================================================
+
+audio_available = False
+
+try:
+    pygame.mixer.init()
+    audio_available = True
+except pygame.error:
+    audio_available = False
+
+
+wing_sound = None
+hit_sound = None
+
+
+if audio_available:
+
+    try:
+
+        wing_sound = pygame.mixer.Sound(
+            asset_path(
+                "assets",
+                "audio",
+                "wing.ogg"
+            )
+        )
+
+        hit_sound = pygame.mixer.Sound(
+            asset_path(
+                "assets",
+                "audio",
+                "hit.ogg"
+            )
+        )
+
+    except pygame.error:
+
+        wing_sound = None
+        hit_sound = None
+
+
+# =========================================================
+# LOAD BACKGROUND
 # =========================================================
 
 BACKGROUND = pygame.image.load(
@@ -75,9 +120,16 @@ BACKGROUND = pygame.image.load(
 
 BACKGROUND = pygame.transform.scale(
     BACKGROUND,
-    (SCREEN_WIDTH, SCREEN_HEIGHT)
+    (
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT
+    )
 )
 
+
+# =========================================================
+# LOAD START IMAGE
+# =========================================================
 
 BEGIN_IMAGE = pygame.image.load(
     asset_path(
@@ -87,6 +139,10 @@ BEGIN_IMAGE = pygame.image.load(
     )
 ).convert_alpha()
 
+
+# =========================================================
+# LOAD GAME OVER IMAGE
+# =========================================================
 
 GAMEOVER_IMAGE = pygame.image.load(
     asset_path(
@@ -153,6 +209,10 @@ class Bird(pygame.sprite.Sprite):
         )
 
 
+    # -----------------------------------------------------
+    # UPDATE BIRD
+    # -----------------------------------------------------
+
     def update(self):
 
         # Bird animation
@@ -171,17 +231,29 @@ class Bird(pygame.sprite.Sprite):
 
         self.rect.y += self.speed
 
-        # Update collision mask
+        # Update mask
 
         self.mask = pygame.mask.from_surface(
             self.image
         )
 
 
+    # -----------------------------------------------------
+    # FLAP
+    # -----------------------------------------------------
+
     def flap(self):
 
         self.speed = -BIRD_SPEED
 
+        if wing_sound:
+
+            wing_sound.play()
+
+
+    # -----------------------------------------------------
+    # START SCREEN ANIMATION
+    # -----------------------------------------------------
 
     def animate_start(self):
 
@@ -197,6 +269,10 @@ class Bird(pygame.sprite.Sprite):
             self.image
         )
 
+
+    # -----------------------------------------------------
+    # RESET
+    # -----------------------------------------------------
 
     def reset(self):
 
@@ -250,6 +326,11 @@ class Pipe(pygame.sprite.Sprite):
 
         self.rect.x = xpos
 
+
+        # -------------------------------------------------
+        # TOP PIPE
+        # -------------------------------------------------
+
         if inverted:
 
             self.image = pygame.transform.flip(
@@ -262,16 +343,26 @@ class Pipe(pygame.sprite.Sprite):
                 self.rect.height - ysize
             )
 
+
+        # -------------------------------------------------
+        # BOTTOM PIPE
+        # -------------------------------------------------
+
         else:
 
             self.rect.y = (
                 SCREEN_HEIGHT - ysize
             )
 
+
         self.mask = pygame.mask.from_surface(
             self.image
         )
 
+
+    # -----------------------------------------------------
+    # UPDATE PIPE
+    # -----------------------------------------------------
 
     def update(self):
 
@@ -317,13 +408,17 @@ class Ground(pygame.sprite.Sprite):
         )
 
 
+    # -----------------------------------------------------
+    # UPDATE GROUND
+    # -----------------------------------------------------
+
     def update(self):
 
         self.rect.x -= GAME_SPEED
 
 
 # =========================================================
-# RANDOM PIPES
+# RANDOM PIPE GENERATOR
 # =========================================================
 
 def get_random_pipes(xpos):
@@ -354,7 +449,7 @@ def get_random_pipes(xpos):
 
 
 # =========================================================
-# CHECK OFF SCREEN
+# OFF SCREEN CHECK
 # =========================================================
 
 def is_off_screen(sprite):
@@ -365,7 +460,7 @@ def is_off_screen(sprite):
 
 
 # =========================================================
-# CREATE BIRD
+# SPRITE GROUPS
 # =========================================================
 
 bird_group = pygame.sprite.Group()
@@ -375,25 +470,13 @@ bird = Bird()
 bird_group.add(bird)
 
 
-# =========================================================
-# CREATE GROUND
-# =========================================================
-
 ground_group = pygame.sprite.Group()
 
-ground1 = Ground(0)
-
-ground2 = Ground(GROUND_WIDTH)
-
 ground_group.add(
-    ground1,
-    ground2
+    Ground(0),
+    Ground(GROUND_WIDTH)
 )
 
-
-# =========================================================
-# CREATE PIPES
-# =========================================================
 
 pipe_group = pygame.sprite.Group()
 
@@ -419,13 +502,14 @@ pipe_group.add(
 
 def reset_game():
 
+    # Reset bird
+
     bird.reset()
 
-    # Remove old pipes
+
+    # Reset pipes
 
     pipe_group.empty()
-
-    # Create new pipes
 
     pipes1 = get_random_pipes(
         SCREEN_WIDTH + 200
@@ -441,6 +525,7 @@ def reset_game():
         pipes2[0],
         pipes2[1]
     )
+
 
     # Reset ground
 
@@ -463,6 +548,7 @@ def draw_start_screen():
         (0, 0)
     )
 
+
     screen.blit(
         BEGIN_IMAGE,
         (
@@ -470,6 +556,7 @@ def draw_start_screen():
             150
         )
     )
+
 
     bird_group.draw(screen)
 
@@ -489,11 +576,13 @@ def draw_game_over():
         (0, 0)
     )
 
+
     pipe_group.draw(screen)
 
     bird_group.draw(screen)
 
     ground_group.draw(screen)
+
 
     screen.blit(
         GAMEOVER_IMAGE,
@@ -502,6 +591,7 @@ def draw_game_over():
             200
         )
     )
+
 
     pygame.display.flip()
 
@@ -514,11 +604,20 @@ async def start_screen():
 
     while True:
 
+        # -------------------------------------------------
+        # EVENTS
+        # -------------------------------------------------
+
         for event in pygame.event.get():
+
+            # Close window
 
             if event.type == QUIT:
 
                 return False
+
+
+            # Keyboard
 
             if event.type == KEYDOWN:
 
@@ -531,23 +630,32 @@ async def start_screen():
 
                     return True
 
+
+            # Mouse / Touch
+
             if event.type == MOUSEBUTTONDOWN:
 
                 bird.flap()
 
                 return True
 
-        # Animate bird
+
+        # -------------------------------------------------
+        # BIRD ANIMATION
+        # -------------------------------------------------
 
         bird.animate_start()
 
-        # Move ground
+
+        # -------------------------------------------------
+        # GROUND MOVEMENT
+        # -------------------------------------------------
 
         ground_group.update()
 
-        # Infinite ground
 
         grounds = ground_group.sprites()
+
 
         if len(grounds) > 0:
 
@@ -565,9 +673,17 @@ async def start_screen():
                     )
                 )
 
+
+        # -------------------------------------------------
+        # DRAW
+        # -------------------------------------------------
+
         draw_start_screen()
 
-        # Give control back to browser
+
+        # -------------------------------------------------
+        # GIVE CONTROL TO BROWSER
+        # -------------------------------------------------
 
         await asyncio.sleep(
             1 / FPS
@@ -575,24 +691,30 @@ async def start_screen():
 
 
 # =========================================================
-# MAIN GAME
+# MAIN GAME LOOP
 # =========================================================
 
 async def game_loop():
 
     running = True
 
+
     while running:
 
-        # =================================================
+        # -------------------------------------------------
         # EVENTS
-        # =================================================
+        # -------------------------------------------------
 
         for event in pygame.event.get():
+
+            # Close
 
             if event.type == QUIT:
 
                 return False
+
+
+            # Keyboard
 
             if event.type == KEYDOWN:
 
@@ -603,37 +725,41 @@ async def game_loop():
 
                     bird.flap()
 
+
+            # Mouse / Touch
+
             if event.type == MOUSEBUTTONDOWN:
 
                 bird.flap()
 
 
-        # =================================================
+        # -------------------------------------------------
         # UPDATE BIRD
-        # =================================================
+        # -------------------------------------------------
 
         bird_group.update()
 
 
-        # =================================================
+        # -------------------------------------------------
         # UPDATE GROUND
-        # =================================================
+        # -------------------------------------------------
 
         ground_group.update()
 
 
-        # =================================================
+        # -------------------------------------------------
         # UPDATE PIPES
-        # =================================================
+        # -------------------------------------------------
 
         pipe_group.update()
 
 
-        # =================================================
+        # -------------------------------------------------
         # INFINITE GROUND
-        # =================================================
+        # -------------------------------------------------
 
         grounds = ground_group.sprites()
+
 
         if len(grounds) > 0:
 
@@ -652,11 +778,12 @@ async def game_loop():
                 )
 
 
-        # =================================================
+        # -------------------------------------------------
         # INFINITE PIPES
-        # =================================================
+        # -------------------------------------------------
 
         pipes = pipe_group.sprites()
+
 
         if len(pipes) >= 2:
 
@@ -682,9 +809,9 @@ async def game_loop():
                 )
 
 
-        # =================================================
+        # -------------------------------------------------
         # COLLISION
-        # =================================================
+        # -------------------------------------------------
 
         ground_collision = pygame.sprite.groupcollide(
             bird_group,
@@ -693,6 +820,7 @@ async def game_loop():
             False,
             pygame.sprite.collide_mask
         )
+
 
         pipe_collision = pygame.sprite.groupcollide(
             bird_group,
@@ -703,36 +831,52 @@ async def game_loop():
         )
 
 
-        # Check top of screen
+        # Bird hits top
 
-        if bird.rect.top <= 0:
+        top_collision = (
+            bird.rect.top <= 0
+        )
 
-            ground_collision = True
+
+        # Bird hits bottom
+
+        bottom_collision = (
+            bird.rect.bottom >= SCREEN_HEIGHT
+        )
 
 
-        # Check bottom
-
-        if bird.rect.bottom >= SCREEN_HEIGHT:
-
-            ground_collision = True
-
+        # -------------------------------------------------
+        # GAME OVER
+        # -------------------------------------------------
 
         if (
             ground_collision
             or pipe_collision
+            or top_collision
+            or bottom_collision
         ):
+
+            if hit_sound:
+
+                hit_sound.play()
+
+
+            # Wait without blocking browser
+
+            await asyncio.sleep(1)
 
             return True
 
 
-        # =================================================
+        # -------------------------------------------------
         # DRAW
-        # =================================================
+        # -------------------------------------------------
 
         screen.blit(
             BACKGROUND,
             (0, 0)
         )
+
 
         pipe_group.draw(screen)
 
@@ -740,12 +884,13 @@ async def game_loop():
 
         bird_group.draw(screen)
 
+
         pygame.display.flip()
 
 
-        # =================================================
+        # -------------------------------------------------
         # IMPORTANT FOR PYGBAG
-        # =================================================
+        # -------------------------------------------------
 
         await asyncio.sleep(
             1 / FPS
@@ -760,11 +905,20 @@ async def game_over_screen():
 
     while True:
 
+        # -------------------------------------------------
+        # EVENTS
+        # -------------------------------------------------
+
         for event in pygame.event.get():
+
+            # Close
 
             if event.type == QUIT:
 
                 return False
+
+
+            # Keyboard
 
             if event.type == KEYDOWN:
 
@@ -775,12 +929,24 @@ async def game_over_screen():
 
                     return True
 
+
+            # Mouse / Touch
+
             if event.type == MOUSEBUTTONDOWN:
 
                 return True
 
 
+        # -------------------------------------------------
+        # DRAW
+        # -------------------------------------------------
+
         draw_game_over()
+
+
+        # -------------------------------------------------
+        # GIVE CONTROL TO BROWSER
+        # -------------------------------------------------
 
         await asyncio.sleep(
             1 / FPS
@@ -788,39 +954,48 @@ async def game_over_screen():
 
 
 # =========================================================
-# MAIN FUNCTION
+# MAIN GAME
 # =========================================================
 
 async def main():
 
     while True:
 
-        # Reset everything
+        # Reset
 
         reset_game()
 
 
-        # Start screen
+        # -------------------------------------------------
+        # START SCREEN
+        # -------------------------------------------------
 
         start = await start_screen()
+
 
         if not start:
 
             break
 
 
-        # Main game
+        # -------------------------------------------------
+        # GAME
+        # -------------------------------------------------
 
         game_finished = await game_loop()
+
 
         if not game_finished:
 
             break
 
 
-        # Game over
+        # -------------------------------------------------
+        # GAME OVER
+        # -------------------------------------------------
 
         restart = await game_over_screen()
+
 
         if not restart:
 
@@ -831,7 +1006,7 @@ async def main():
 
 
 # =========================================================
-# RUN GAME
+# START
 # =========================================================
 
 if __name__ == "__main__":
