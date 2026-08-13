@@ -1,5 +1,11 @@
+import os
 import pygame, random, time
 from pygame.locals import *
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def asset_path(*parts):
+    return os.path.join(BASE_DIR, *parts)
 
 #VARIABLES
 SCREEN_WIDHT = 400
@@ -16,8 +22,8 @@ PIPE_HEIGHT = 500
 
 PIPE_GAP = 150
 
-wing = 'assets/audio/wing.wav'
-hit = 'assets/audio/hit.wav'
+wing = asset_path('assets', 'audio', 'wing.wav')
+hit = asset_path('assets', 'audio', 'hit.wav')
 
 pygame.mixer.init()
 
@@ -27,14 +33,14 @@ class Bird(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
 
-        self.images =  [pygame.image.load('assets/sprites/bluebird-upflap.png').convert_alpha(),
-                        pygame.image.load('assets/sprites/bluebird-midflap.png').convert_alpha(),
-                        pygame.image.load('assets/sprites/bluebird-downflap.png').convert_alpha()]
+        self.images =  [pygame.image.load(asset_path('assets', 'sprites', 'bluebird-upflap.png')).convert_alpha(),
+                        pygame.image.load(asset_path('assets', 'sprites', 'bluebird-midflap.png')).convert_alpha(),
+                        pygame.image.load(asset_path('assets', 'sprites', 'bluebird-downflap.png')).convert_alpha()]
 
         self.speed = SPEED
 
         self.current_image = 0
-        self.image = pygame.image.load('assets/sprites/bluebird-upflap.png').convert_alpha()
+        self.image = pygame.image.load(asset_path('assets', 'sprites', 'bluebird-upflap.png')).convert_alpha()
         self.mask = pygame.mask.from_surface(self.image)
 
         self.rect = self.image.get_rect()
@@ -64,7 +70,7 @@ class Pipe(pygame.sprite.Sprite):
     def __init__(self, inverted, xpos, ysize):
         pygame.sprite.Sprite.__init__(self)
 
-        self. image = pygame.image.load('assets/sprites/pipe-green.png').convert_alpha()
+        self. image = pygame.image.load(asset_path('assets', 'sprites', 'pipe-green.png')).convert_alpha()
         self.image = pygame.transform.scale(self.image, (PIPE_WIDHT, PIPE_HEIGHT))
 
 
@@ -90,7 +96,7 @@ class Ground(pygame.sprite.Sprite):
     
     def __init__(self, xpos):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('assets/sprites/base.png').convert_alpha()
+        self.image = pygame.image.load(asset_path('assets', 'sprites', 'base.png')).convert_alpha()
         self.image = pygame.transform.scale(self.image, (GROUND_WIDHT, GROUND_HEIGHT))
 
         self.mask = pygame.mask.from_surface(self.image)
@@ -115,9 +121,9 @@ pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDHT, SCREEN_HEIGHT))
 pygame.display.set_caption('Flappy Bird')
 
-BACKGROUND = pygame.image.load('assets/sprites/background-day.png')
+BACKGROUND = pygame.image.load(asset_path('assets', 'sprites', 'background-day.png'))
 BACKGROUND = pygame.transform.scale(BACKGROUND, (SCREEN_WIDHT, SCREEN_HEIGHT))
-BEGIN_IMAGE = pygame.image.load('assets/sprites/message.png').convert_alpha()
+BEGIN_IMAGE = pygame.image.load(asset_path('assets', 'sprites', 'message.png')).convert_alpha()
 
 bird_group = pygame.sprite.Group()
 bird = Bird()
